@@ -66,6 +66,14 @@ public static class Debugger
         }
     }
 
+    private static void SaveConfig()
+    {
+        StringBuilder stringBuilder = new StringBuilder();
+        foreach (var data in logSystemEnabledDic)
+            stringBuilder.Append(string.Format("{0}:{1}\n", data.Key.PadRight(20), data.Value.ToString().PadRight(10)));
+        File.WriteAllText(configPath, stringBuilder.ToString());
+    }
+
     private static void LoadXmlConfig()
     {
         XmlDocument xmlDoc = new XmlDocument();
@@ -95,14 +103,6 @@ public static class Debugger
         }
         xmlDoc.AppendChild(root);
         xmlDoc.Save(xmlConfigPath);
-    }
-
-    private static void SaveConfig()
-    {
-        StringBuilder stringBuilder = new StringBuilder();
-        foreach (var data in logSystemEnabledDic)
-            stringBuilder.Append(string.Format("{0}:{1}\n", data.Key.PadRight(20), data.Value.ToString().PadRight(10)));
-        File.WriteAllText(configPath, stringBuilder.ToString());
     }
 
     public static void Log(string logType, object message)
@@ -139,6 +139,6 @@ public static class Debugger
     }
 }
 
-public static partial  class LogType
-{    
+public static partial class LogType
+{
 }
