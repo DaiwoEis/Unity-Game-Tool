@@ -5,7 +5,9 @@ using System.Collections.Generic;
 public class ObjectPool : MonoBehaviour
 {
     [SerializeField]
-    private GameObject _template;
+    private GameObject _templete;
+
+    public GameObject Templete { get { return _templete; } }
 
     [SerializeField]
     private int _initSize = 10;
@@ -33,7 +35,7 @@ public class ObjectPool : MonoBehaviour
         string poolName = "Pool of " + template.name;
         GameObject go = new GameObject(poolName);
         ObjectPool pool = go.AddComponent<ObjectPool>();
-        pool._template = template;
+        pool._templete = template;
         pool._initSize = initSize;
 
         pool.InstantiatePool();
@@ -46,7 +48,7 @@ public class ObjectPool : MonoBehaviour
         _allObjectList = new List<GameObject>(_initSize);
         _availableObjectList = new List<GameObject>(_initSize);
 
-        if (_template == null)
+        if (_templete == null)
         {
             Debug.LogError("Object Pool: " + PoolName + ": Template GameObject is null! Make sure you assigned a template either in the inspector or in your scripts.");
             return;
@@ -85,20 +87,21 @@ public class ObjectPool : MonoBehaviour
             _allObjectList.Add(newGO);
         }
 
-        newGO.GetComponent<IPooled>().OnRetrieveFromPool();
-
-        newGO.SetActive(true);
         newGO.transform.position = pos;
         newGO.transform.rotation = rot;
+
+        newGO.SetActive(true);
+
+        newGO.GetComponent<PooledObject>().RetrieveFromPool();
 
         return newGO;
     }
 
     private GameObject NewActiveObject()
     {
-        GameObject newGO = Instantiate(_template, transform);
-        foreach (var pooled in newGO.GetComponents<IPooled>())
-            pooled.OwnerPool = gameObject;
+        GameObject newGO = Instantiate(_templete, transform);
+        PooledObject pooledObject = newGO.GetComponent<PooledObject>() ?? newGO.AddComponent<PooledObject>();
+        pooledObject.OwnerPool = this;
 
         return newGO;
     }
@@ -117,14 +120,14 @@ public class ObjectPool : MonoBehaviour
 
     private void DestroyInternal(GameObject pooledObject)
     {
-        var pooled = pooledObject.GetComponent<IPooled>();
-        if (pooled == null || pooled.OwnerPool != gameObject)
+        var pooled = pooledObject.GetComponent<PooledObject>();
+        if (pooled == null || pooled.OwnerPool != this)
         {
             Debug.LogWarning(string.Format("Object {0} is not {1} pool member", pooledObject.name, PoolName));
             return;
         }
 
-        pooled.OnReturnToPool();
+        pooled.ReturnToPool();
         pooledObject.SetActive(false);
         pooledObject.transform.SetParent(transform);
         _availableObjectList.Add(pooledObject);

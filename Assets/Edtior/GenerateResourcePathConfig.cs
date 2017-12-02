@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Text;
 using UnityEditor;
 
@@ -15,8 +16,13 @@ public class GenerateResourcePathConfig
             sb.AppendLine("[" + mainKey + "]");
 
             var pathData = rpd.Value;
-            string[] guids =
-                AssetDatabase.FindAssets("t:" + pathData.typeName, new[] {pathData.resourceStoragePath});
+            if (!Directory.Exists(Path.GetFullPath(pathData.resourceStoragePath)))
+            {                
+                Directory.CreateDirectory(Path.GetFullPath(pathData.resourceStoragePath));
+                continue;
+            }
+
+            string[] guids = AssetDatabase.FindAssets("t:" + pathData.typeName, new[] {pathData.resourceStoragePath});
 
             for (var i = 0; i < guids.Length; i++)
             {
@@ -28,6 +34,9 @@ public class GenerateResourcePathConfig
 
             sb.AppendLine();
         }
+
+        if (!Directory.Exists(Path.GetFullPath("Assets/StreamingAssets")))
+            Directory.CreateDirectory(Path.GetFullPath("Assets/StreamingAssets"));
 
         File.WriteAllText("Assets/StreamingAssets/ResourcePathConfig.txt", sb.ToString());
         AssetDatabase.Refresh();
